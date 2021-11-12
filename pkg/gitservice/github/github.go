@@ -29,12 +29,13 @@ type Service interface {
 // context.Value with gitservice.MaxWorkerKey as key
 func NewGithubClient(ctx context.Context) Service {
 	var maxWorker int
+	var ok bool
 
 	hc := http.DefaultClient
 	hc.Transport = newRateLimitTransport(http.DefaultTransport)
 	client := github.NewClient(hc)
 
-	if _, ok := ctx.Value(git.MaxWorkerKey).(int); !ok {
+	if maxWorker, ok = ctx.Value(git.MaxWorkerKey).(int); !ok {
 		maxWorker = 10 // fallback
 	}
 
@@ -47,6 +48,7 @@ func NewGithubClient(ctx context.Context) Service {
 // NewGithubClientWithToken create new github api client with token
 func NewGithubClientWithToken(ctx context.Context, token string) Service {
 	var maxWorker int
+	var ok bool
 
 	ts := oauth2.StaticTokenSource(
 		&oauth2.Token{AccessToken: token},
@@ -55,7 +57,7 @@ func NewGithubClientWithToken(ctx context.Context, token string) Service {
 	hc.Transport = newRateLimitTransport(hc.Transport)
 	client := github.NewClient(hc)
 
-	if _, ok := ctx.Value(git.MaxWorkerKey).(int); !ok {
+	if maxWorker, ok = ctx.Value(git.MaxWorkerKey).(int); !ok {
 		maxWorker = 10 // fallback
 	}
 
