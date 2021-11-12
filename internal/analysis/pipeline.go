@@ -93,14 +93,8 @@ func (a *analysis) Runner() {
 	defer cancel()
 
 	// do we need to stop when error occurs?
-	// a.processOrganizations(ctx)
-	// a.processUsers(ctx)
-
-	a.repositories = append(a.repositories, cgit.Repository{
-		URL:          "https://github.com/circleous/dotfiles.git",
-		Name:         "circleous/dotfiles",
-		LatestCommit: "",
-	})
+	a.processOrganizations(ctx)
+	a.processUsers(ctx)
 	a.processRepositories(ctx)
 
 	log.Debug().Msgf("%v", a.users)

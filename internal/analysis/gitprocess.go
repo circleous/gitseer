@@ -33,8 +33,7 @@ func processRepository(repo cgit.Repository, config Config) {
 			return
 		}
 
-		// FIXME: change u.PATH to repo.Name
-		repoPath = path.Join(config.StoragePath, u.Host, u.Path)
+		repoPath = path.Join(config.StoragePath, u.Host, repo.Name)
 		wt = osfs.New(repoPath)
 		dot, _ := wt.Chroot(".git")
 		storer = filesystem.NewStorage(dot, cache.NewObjectLRUDefault())
