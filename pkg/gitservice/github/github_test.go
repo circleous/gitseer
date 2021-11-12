@@ -1,16 +1,17 @@
-package gitservice_test
+package github_test
 
 import (
 	"context"
 	"testing"
 
-	"github.com/circleous/gitseer/pkg/gitservice"
+	"github.com/circleous/gitseer/pkg/git"
+	"github.com/circleous/gitseer/pkg/gitservice/github"
 )
 
 func TestListOrg(t *testing.T) {
 	ctx := context.Background()
-	gs := gitservice.NewGithubClient(ctx)
-	org := "kolatif"
+	gs := github.NewGithubClient(ctx)
+	org := "traveloka"
 	members, err := gs.ListOrgUsers(ctx, org)
 	if members == nil || err != nil {
 		t.Fatalf("Error fetching users from org %s, %v", org, err.Error())
@@ -20,9 +21,9 @@ func TestListOrg(t *testing.T) {
 
 func TestListRepo(t *testing.T) {
 	ctx := context.Background()
-	gs := gitservice.NewGithubClient(ctx)
+	gs := github.NewGithubClient(ctx)
 	user := "circleous"
-	repos, err := gs.ListUserRepositories(ctx, user, &gitservice.ListRepositoriesOptions{
+	repos, err := gs.ListUserRepositories(ctx, user, &git.ListRepositoriesOptions{
 		WithFork: false,
 	})
 	if repos == nil || err != nil {
