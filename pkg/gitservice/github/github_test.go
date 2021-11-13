@@ -23,9 +23,10 @@ func TestListRepo(t *testing.T) {
 	ctx := context.Background()
 	gs := github.NewGithubClient(ctx)
 	user := "circleous"
-	repos, err := gs.ListUserRepositories(ctx, user, &git.ListRepositoriesOptions{
-		WithFork: false,
-	})
+	repos, err := gs.ListUserRepositories(ctx, user,
+		&git.ListRepositoriesOptions{
+			WithFork: false,
+		})
 	if repos == nil || err != nil {
 		t.Fatalf("Error fetching repos from user %s, %v", user, err.Error())
 	}

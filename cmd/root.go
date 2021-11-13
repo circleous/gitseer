@@ -11,7 +11,8 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "gitseer",
 	Short: "gitseer is a tool to scan for secrets in git repositories",
-	Long:  `A flexible secrets scanner for git repositories. Currently supports gitlab and github.`,
+	Long: `A flexible secrets scanner for git repositories. Currently supports
+gitlab and github.`,
 	CompletionOptions: cobra.CompletionOptions{
 		DisableDefaultCmd: true,
 	},
@@ -25,9 +26,12 @@ var (
 )
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&confPath, "config", "c", "gitseer.toml", "config file")
-	rootCmd.PersistentFlags().BoolVarP(&silent, "silent", "s", false, "silent, only error or panic output")
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "more verbose for debug output")
+	rootCmd.PersistentFlags().StringVarP(&confPath, "config", "c",
+		"gitseer.toml", "config file")
+	rootCmd.PersistentFlags().BoolVarP(&silent, "silent", "s", false,
+		"silent, only error or panic output")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false,
+		"more verbose for debug output")
 	cobra.OnInitialize(func() {
 		// init logger
 		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})

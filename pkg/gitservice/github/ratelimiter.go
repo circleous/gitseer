@@ -16,7 +16,6 @@ const writeDelay = 1 * time.Second
 
 // rateLimitTransport implements GitHub's best practices
 // for avoiding rate limits
-// https://developer.github.com/v3/guides/best-practices-for-integrators/#dealing-with-abuse-rate-limits
 type rateLimitTransport struct {
 	transport        http.RoundTripper
 	delayNextRequest bool
@@ -25,14 +24,15 @@ type rateLimitTransport struct {
 	m sync.Mutex
 }
 
+// revive:disable-next-line:line-length-limit
 func (rlt *rateLimitTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	// Make requests for a single user or client ID serially
+	// Make requests for a single user serially
 	// This is also necessary for safely saving
 	// and restoring bodies between retries below
-	rlt.lock(req)
+	rlt.m.Lock()
 
 	// If you're making a large number of POST, PATCH, PUT, or DELETE requests
-	// for a single user or client ID, wait at least one second between each request.
+	// for a single user, wait at least 1 second between each request.
 	if rlt.delayNextRequest {
 		log.Debug().Msgf("Sleeping %s between write operations", writeDelay)
 		time.Sleep(writeDelay)
@@ -42,7 +42,7 @@ func (rlt *rateLimitTransport) RoundTrip(req *http.Request) (*http.Response, err
 
 	resp, err := rlt.transport.RoundTrip(req)
 	if err != nil {
-		rlt.unlock(req)
+		rlt.m.Unlock()
 		return resp, err
 	}
 
@@ -57,38 +57,30 @@ func (rlt *rateLimitTransport) RoundTrip(req *http.Request) (*http.Response, err
 	ghErr := github.CheckResponse(resp)
 	resp.Body = r2
 
-	// When you have been limited, use the Retry-After response header to slow down.
+	// When you have been limited, use the Retry-After response header to slow
+	// down.
 	if arlErr, ok := ghErr.(*github.AbuseRateLimitError); ok {
 		rlt.delayNextRequest = false
 		retryAfter := arlErr.GetRetryAfter()
-		log.Debug().Msgf("Abuse detection mechanism triggered, sleeping for %s before retrying",
-			retryAfter)
+		log.Debug().Msg("Abuse detection mechanism triggered")
 		time.Sleep(retryAfter)
-		rlt.unlock(req)
+		rlt.m.Unlock()
 		return rlt.RoundTrip(req)
 	}
 
 	if rlErr, ok := ghErr.(*github.RateLimitError); ok {
 		rlt.delayNextRequest = false
 		retryAfter := rlErr.Rate.Reset.Sub(time.Now())
-		log.Debug().Msgf("Rate limit %d reached, sleeping for %s (until %s) before retrying",
-			rlErr.Rate.Limit, retryAfter, time.Now().Add(retryAfter))
+		log.Debug().Msgf("Rate limit %d reached, sleeping for %s",
+			rlErr.Rate.Limit, retryAfter)
 		time.Sleep(retryAfter)
-		rlt.unlock(req)
+		rlt.m.Unlock()
 		return rlt.RoundTrip(req)
 	}
 
-	rlt.unlock(req)
+	rlt.m.Unlock()
 
 	return resp, nil
-}
-
-func (rlt *rateLimitTransport) lock(req *http.Request) {
-	rlt.m.Lock()
-}
-
-func (rlt *rateLimitTransport) unlock(req *http.Request) {
-	rlt.m.Unlock()
 }
 
 // newRateLimitTransport creates new roundtripper rate limiter
@@ -110,7 +102,8 @@ func drainBody(b io.ReadCloser) (r1, r2 io.ReadCloser, err error) {
 	if err = b.Close(); err != nil {
 		return nil, b, err
 	}
-	return ioutil.NopCloser(&buf), ioutil.NopCloser(bytes.NewReader(buf.Bytes())), nil
+	return ioutil.NopCloser(&buf),
+		ioutil.NopCloser(bytes.NewReader(buf.Bytes())), nil
 }
 
 func isWriteMethod(method string) bool {

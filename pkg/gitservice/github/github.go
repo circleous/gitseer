@@ -21,12 +21,13 @@ type githubService struct {
 type Service interface {
 	// ListOrgUsers return all users joined the organization
 	ListOrgUsers(ctx context.Context, org string) ([]git.User, error)
-	// ListUserRepositories return all repositorises from a user, can be used for org
-	ListUserRepositories(ctx context.Context, user string, opt *git.ListRepositoriesOptions) ([]git.Repository, error)
+	// ListUserRepositories return all repositorises from a user / org
+	ListUserRepositories(ctx context.Context, user string,
+		opt *git.ListRepositoriesOptions) ([]git.Repository, error)
 }
 
-// NewGithubClient create plain new github api client without token, change max worker in
-// context.Value with gitservice.MaxWorkerKey as key
+// NewGithubClient create plain new github api client without token, change max
+// worker in context.Value with gitservice.MaxWorkerKey as key
 func NewGithubClient(ctx context.Context) Service {
 	var maxWorker int
 	var ok bool
@@ -68,15 +69,17 @@ func NewGithubClientWithToken(ctx context.Context, token string) Service {
 }
 
 // ListOrgUsers return all github users joined the organization
+// revive:disable-next-line:line-length-limit
 func (ghs *githubService) ListOrgUsers(ctx context.Context, org string) ([]git.User, error) {
 	var m sync.Mutex
 	var users []git.User
 
 	sem := semaphore.NewWeighted(int64(ghs.maxWorker))
 
-	gitUsers, resp, err := ghs.client.Organizations.ListMembers(ctx, org, &github.ListMembersOptions{
-		ListOptions: github.ListOptions{PerPage: 100},
-	})
+	gitUsers, resp, err := ghs.client.Organizations.ListMembers(ctx, org,
+		&github.ListMembersOptions{
+			ListOptions: github.ListOptions{PerPage: 100},
+		})
 	if err != nil {
 		return nil, err
 	}
@@ -96,15 +99,16 @@ func (ghs *githubService) ListOrgUsers(ctx context.Context, org string) ([]git.U
 		sem.Acquire(ctx, 1)
 		page := page // copy
 		go func() {
-			gitUsers, _, err := ghs.client.Organizations.ListMembers(ctx, org, &github.ListMembersOptions{
-				ListOptions: github.ListOptions{PerPage: 100, Page: page},
-			})
+			gitUsers, _, err := ghs.client.Organizations.ListMembers(ctx, org,
+				&github.ListMembersOptions{
+					ListOptions: github.ListOptions{PerPage: 100, Page: page},
+				})
 			if err != nil {
 				return
 			}
 
-			// rather than switch mutex every append(), better to switch one time
-			// so that it wont spent so much time on context switches
+			// rather than switch mutex every append(), better to switch one
+			// time so that it wont spent so much time on context switches
 			m.Lock()
 			for _, gitUser := range gitUsers {
 				users = append(users, git.User{
@@ -126,8 +130,9 @@ func (ghs *githubService) ListOrgUsers(ctx context.Context, org string) ([]git.U
 	return users, nil
 }
 
-// ListUserRepositories return all repositorises given user, when opt.WithFork is true, return will also includes
-// forked repositories
+// ListUserRepositories return all repositorises given user, when opt.WithFork
+// is true, return will also includes forked repositories
+// revive:disable-next-line:line-length-limit
 func (ghs *githubService) ListUserRepositories(ctx context.Context, user string, opt *git.ListRepositoriesOptions) ([]git.Repository, error) {
 	var m sync.Mutex
 	var repos []git.Repository
@@ -138,9 +143,10 @@ func (ghs *githubService) ListUserRepositories(ctx context.Context, user string,
 		opt = &git.DefaultListRepositoriesOpt
 	}
 
-	gitRepos, resp, err := ghs.client.Repositories.List(ctx, user, &github.RepositoryListOptions{
-		ListOptions: github.ListOptions{PerPage: 100},
-	})
+	gitRepos, resp, err := ghs.client.Repositories.List(ctx, user,
+		&github.RepositoryListOptions{
+			ListOptions: github.ListOptions{PerPage: 100},
+		})
 	if err != nil {
 		return nil, err
 	}
@@ -165,17 +171,17 @@ func (ghs *githubService) ListUserRepositories(ctx context.Context, user string,
 		sem.Acquire(ctx, 1)
 		page := page // copy
 		go func() {
-			gitRepos, _, err := ghs.client.Repositories.List(ctx, user, &github.RepositoryListOptions{
-				ListOptions: github.ListOptions{PerPage: 100, Page: page},
-			})
-			// TODO: should log or better yet
+			gitRepos, _, err := ghs.client.Repositories.List(ctx, user,
+				&github.RepositoryListOptions{
+					ListOptions: github.ListOptions{PerPage: 100, Page: page},
+				})
 			if err != nil {
 				errChan <- err
 				return
 			}
 
-			// rather than switch mutex every append(), better to switch one time
-			// so that it wont spent so much time on context switches
+			// rather than switch mutex every append(), better to switch one
+			// time so that it wont spent so much time on context switches
 			m.Lock()
 			for _, gitRepo := range gitRepos {
 				if *gitRepo.Fork && !opt.WithFork {

@@ -14,28 +14,35 @@ func (a *analysis) processOrganizations(ctx context.Context) {
 		WithFork: a.config.WithFork,
 	}
 
-	// Blocking request ahead, need more research for avoiding secondary rate limit
+	// Blocking request ahead, need more research for avoiding secondary rate
+	// limit
 	for _, org := range a.config.Organizations {
 		log.Debug().Str("organization", org.Name).Msg("processing org")
 
 		if !org.ExpandRepo && !org.ExpandUser {
-			log.Info().Str("organization", org.Name).Str("type", org.Type).Msg("atleast one of expand_user or expand_repo needs to be true")
+			log.Info().Str("organization", org.Name).Str("type", org.Type).
+				Msg("atleast one of expand_user / expand_repo needs to be true")
 			continue
 		}
 
 		if org.ExpandUser {
 			u, err := a.gs.ListOrgUsers(ctx, org.Name, org.Type)
 			if err != nil {
-				log.Error().Err(err).Str("organization", org.Name).Str("type", org.Type).Msg("failed to fetch organization users")
+				log.Error().Err(err).Str("organization", org.Name).
+					Str("type", org.Type).
+					Msg("failed to fetch organization users")
 			} else if len(u) > 0 {
 				a.users = append(a.users, u...)
 			}
 		}
 
 		if org.ExpandRepo {
-			r, err := a.gs.ListOrgRepositories(ctx, org.Name, org.Type, listRepoOpt)
+			r, err := a.gs.ListOrgRepositories(ctx, org.Name, org.Type,
+				listRepoOpt)
 			if err != nil {
-				log.Error().Err(err).Str("organization", org.Name).Str("type", org.Type).Msg("failed to fetch organization repositories")
+				log.Error().Err(err).Str("organization", org.Name).
+					Str("type", org.Type).
+					Msg("failed to fetch organization repositories")
 			} else if len(r) > 0 {
 				a.repositories = append(a.repositories, r...)
 			}
@@ -48,13 +55,16 @@ func (a *analysis) processUsers(ctx context.Context) {
 		WithFork: a.config.WithFork,
 	}
 
-	// Blocking request ahead, need more research for avoiding secondary rate limit
+	// Blocking request ahead, need more research for avoiding secondary rate
+	// limit
 	for _, user := range a.users {
 		log.Debug().Str("user", user.Name).Msg("processing user")
-		r, err := a.gs.ListUserRepositories(ctx, user.Name, user.Type, listRepoOpt)
+		r, err := a.gs.ListUserRepositories(ctx, user.Name, user.Type,
+			listRepoOpt)
 		log.Debug().Str("user", user.Name).Msgf("got repo %d", len(r))
 		if err != nil {
-			log.Error().Err(err).Str("user", user.Name).Str("type", user.Type).Msg("failed to fetch user repositories")
+			log.Error().Err(err).Str("user", user.Name).Str("type", user.Type).
+				Msg("failed to fetch user repositories")
 		} else if len(r) > 0 {
 			a.repositories = append(a.repositories, r...)
 		}
@@ -65,6 +75,25 @@ func (a *analysis) processRepositories(ctx context.Context) {
 	sem := semaphore.NewWeighted(int64(a.config.MaxWorker))
 
 	config := *a.config // copy
+	sig := a.signature
+
+	findingC := make(chan finding)
+	defer close(findingC)
+
+	quit := make(chan struct{})
+	defer close(quit)
+
+	// collects any findings
+	go func() {
+		for {
+			select {
+			case f := <-findingC:
+				a.finds = append(a.finds, f)
+			case <-quit:
+				return
+			}
+		}
+	}()
 
 	for _, repo := range a.repositories {
 		if err := sem.Acquire(ctx, 1); err != nil {
@@ -74,16 +103,20 @@ func (a *analysis) processRepositories(ctx context.Context) {
 
 		repo := repo // copy
 
-		// TODO: benchmark this path, currently we only use one goroutine per repository
+		// TODO: benchmark this path, currently we only use one goroutine per
+		// repository
 		go func() {
 			defer sem.Release(1)
-			processRepository(repo, config)
+			processRepository(repo, config.StorageType, config.StoragePath,
+				config.IgnoreFiles, sig, findingC)
 		}()
 	}
 
 	if err := sem.Acquire(ctx, int64(a.config.MaxWorker)); err != nil {
 		log.Error().Err(err).Msg("Failed to acquire semaphore")
 	}
+
+	quit <- struct{}{}
 }
 
 // Runner run the overall analysis pipeline

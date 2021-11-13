@@ -3,9 +3,11 @@ package cmd
 import (
 	"os"
 
-	"github.com/circleous/gitseer/internal/analysis"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
+
+	"github.com/circleous/gitseer/internal/analysis"
+	"github.com/circleous/gitseer/pkg/signature"
 )
 
 func init() {
@@ -19,14 +21,20 @@ var scanCmd = &cobra.Command{
 	Run:   scan,
 }
 
-func scan(cmd *cobra.Command, args []string) {
+func scan(_ *cobra.Command, _ []string) {
 	conf, err := analysis.ParseConfig(confPath)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to parse config file")
 		os.Exit(1)
 	}
 
-	a, err := analysis.New(conf)
+	sig, err := signature.LoadSignature(conf.SignaturePath)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to signature")
+		os.Exit(1)
+	}
+
+	a, err := analysis.New(conf, sig.Signatures)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to initialize")
 		os.Exit(1)

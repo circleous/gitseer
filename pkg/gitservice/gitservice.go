@@ -17,10 +17,13 @@ var (
 // Service is the interface the gitservice
 type Service interface {
 	// ListOrgUsers return all users joined the organization
+	// revive:disable-next-line:line-length-limit
 	ListOrgUsers(ctx context.Context, org string, serviceType string) ([]git.User, error)
 	// ListOrgRepositories return all repositorises in the organization
+	// revive:disable-next-line:line-length-limit
 	ListOrgRepositories(ctx context.Context, org string, serviceType string, opt *git.ListRepositoriesOptions) ([]git.Repository, error)
 	// ListUserRepositories return all repositorises from a user
+	// revive:disable-next-line:line-length-limit
 	ListUserRepositories(ctx context.Context, user string, serviceType string, opt *git.ListRepositoriesOptions) ([]git.Repository, error)
 }
 
@@ -38,7 +41,7 @@ type gitService struct {
 	ghs github.Service
 }
 
-// NewGitService create a wrapper around the available git service api for listing
+// NewGitService a wrapper around the available git service api for listing
 func NewGitService(ctx context.Context, opt *Options) Service {
 	var githubSvc github.Service
 
@@ -57,8 +60,10 @@ func NewGitService(ctx context.Context, opt *Options) Service {
 	}
 }
 
-// ListOrgUsers return all users joined the organization, valid serviceTypes are [github, gitlab]
-func (gs *gitService) ListOrgUsers(ctx context.Context, org string, serviceType string) ([]git.User, error) {
+// ListOrgUsers return all users joined the organization, valid serviceTypes are
+// [github, gitlab]
+func (gs *gitService) ListOrgUsers(ctx context.Context, org string,
+	serviceType string) ([]git.User, error) {
 	switch serviceType {
 	case git.GITHUB:
 		return gs.ghs.ListOrgUsers(ctx, org)
@@ -67,8 +72,10 @@ func (gs *gitService) ListOrgUsers(ctx context.Context, org string, serviceType 
 	return nil, ErrInvalidServiceType
 }
 
-// ListOrgRepositories return all repositorises in the organization, valid serviceTypes are [github, gitlab],
-// when opt.WithFork is true, return will also includes forked repositories
+// ListOrgRepositories return all repositorises in the organization, valid
+// serviceTypes are [github, gitlab], when opt.WithFork is true, return will
+// also includes forked repositories
+// revive:disable-next-line:line-length-limit
 func (gs *gitService) ListOrgRepositories(ctx context.Context, org string, serviceType string, opt *git.ListRepositoriesOptions) ([]git.Repository, error) {
 	switch serviceType {
 	case git.GITHUB:
@@ -78,8 +85,10 @@ func (gs *gitService) ListOrgRepositories(ctx context.Context, org string, servi
 	return nil, ErrInvalidServiceType
 }
 
-// ListUserRepositories return all repositorises given user, valid serviceTypes are [github, gitlab]
-// when opt.WithFork is true, return will also includes forked repositories
+// ListUserRepositories return all repositorises given user, valid serviceTypes
+// are [github, gitlab] when opt.WithFork is true, return will also includes
+// forked repositories
+// revive:disable-next-line:line-length-limit
 func (gs *gitService) ListUserRepositories(ctx context.Context, user string, serviceType string, opt *git.ListRepositoriesOptions) ([]git.Repository, error) {
 	switch serviceType {
 	case git.GITHUB:

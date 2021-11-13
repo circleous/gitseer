@@ -2,12 +2,20 @@
 # dedicated personal access token for this. Required permissions are org:read
 # and repo:read. While it's possible to use gitseer without a github token,
 # it's recommended to use one to avoid getting any rate limit.
-github_token = "ghp_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+github_token = ""
 
 # max_worker define how much worker the program will use. Each worker are
 # assigned to a goroutine, hence doesn't necessarily maps to 1-on-1 with the
 # system threads. 
 max_worker = 10
+
+# with_fork if set to true, any forked repository either by organization/user
+# will be included in the scan
+with_fork = false
+
+# all_branch if set to true, any branch will also be included in scan. else,
+# only commits related to HEAD are scanned.
+all_branch = false
 
 # Available storage_types are ["disk", "memory"], for disk storage_type it's
 # required to define the storage_path. Examples:
@@ -21,13 +29,8 @@ max_worker = 10
 storage_type = "disk"
 storage_path = "/home/user/gitseer"
 
-# with_fork if set to true, any forked repository either by organization/user
-# will be included in the scan
-with_fork = false
-
-# all_branch if set to true, any branch will also be included in scan. else,
-# only commits related to HEAD are scanned.
-all_branch = false
+# signature_path
+signature_path = "signatures.toml"
 
 # [[organization]]
 # type = "github"

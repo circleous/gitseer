@@ -16,7 +16,8 @@ var DefaultListRepositoriesOpt = ListRepositoriesOptions{
 // WithValue function to associate an int value with a context.
 var MaxWorkerKey = struct{}{}
 
-// ListRepositoriesOptions is the option struct used when fetching users/organizations repositories
+// ListRepositoriesOptions is the option struct used when fetching
+// users/organizations repositories
 type ListRepositoriesOptions struct {
 	// WithFork decides if forked repo should be included in the list
 	WithFork bool

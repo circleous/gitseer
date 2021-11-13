@@ -1,0 +1,6 @@
+version = "1"
+
+[[signature]]
+    type = "filename"
+    match = "totally_not_sus"
+    
