@@ -1,6 +1,455 @@
 version = "1"
 
 [[signature]]
-    type = "filename"
-    match = "totally_not_sus"
-    
+type = "extension"
+match = ".ovpn"
+enable = true
+description = "OpenVPN client configuration file"
+id = "95e9efa1c9a71b73a2f2d24c073d39c2349c0429"
+
+[[signature]]
+type = "extension"
+match = ".cscfg"
+enable = true
+description = "Azure service configuration schema file"
+id = "a058fcdaa3c08fdb7b40a3288b7f0b529695d04c"
+
+[[signature]]
+type = "extension"
+match = ".rdp"
+enable = true
+description = "Remote Desktop connection file"
+id = "28a2bded9d2e7e306eadd586c9799d16119a0834"
+
+[[signature]]
+type = "extension"
+match = ".jks"
+enable = true
+description = "Java keystore file"
+id = "a65776a56327fd07be3409d8c57ae3d8b1b8ba34"
+
+[[signature]]
+type = "extension"
+match = ".psafe3"
+enable = true
+description = "Password Safe database file"
+id = "ebce39d911acdc3095c3113a3074e68a3e369177"
+
+[[signature]]
+type = "extension"
+match = ".agilekeychain"
+enable = true
+description = "1Password password manager database file"
+id = "76ab771fb307c343f893ff46e06cc79b124da467"
+
+[[signature]]
+type = "extension"
+match = ".keychain"
+enable = true
+description = "Apple Keychain database file"
+id = "c87ea98ed1536116d001655519907c11422e7caa"
+
+[[signature]]
+type = "extension"
+match = ".kwallet"
+enable = true
+description = "KDE Wallet Manager database file"
+id = "dd798302fa5a3006d4b4d4271646f20c426ec7a0"
+
+[[signature]]
+type = "extension"
+match = ".tblk"
+enable = true
+description = "Tunnelblick VPN configuration file"
+id = "37a24c8db429c82515f0fef77f39842408165763"
+
+[[signature]]
+type = "extension"
+match = ".dayone"
+enable = true
+description = "Day One journal file"
+id = "dcfd4d61dc9ab547259990ddf66655ee7dd2c685"
+
+[[signature]]
+type = "filename"
+match = "otr.private_key"
+enable = true
+description = "Pidgin OTR private key"
+id = "ebd1b49a528988ea7c158392749c0a1799e54a40"
+
+[[signature]]
+type = "filename"
+match = "secret_token.rb"
+enable = true
+description = "Ruby On Rails secret token configuration file"
+id = "bed13ffea9aab8663e1db33605bc61cc3567d6c1"
+
+[[signature]]
+type = "filename"
+match = "jenkins.plugins.publish_over_ssh.BapSshPublisherPlugin.xml"
+enable = true
+description = "Jenkins publish over SSH plugin file"
+id = "45fdd1021f890ad0c8e6cfb40a1384c987768874"
+
+[[signature]]
+type = "filename"
+match = "credentials.xml"
+enable = true
+description = "Potential Jenkins credentials file"
+id = "9c8fb8f9679f2916bfe2d36bb7a231ec628ef1b1"
+
+[[signature]]
+type = "filename"
+match = "Favorites.plist"
+enable = true
+description = "Sequel Pro MySQL database manager bookmark file"
+id = "98fdbd26550139fe57967266088462467b8d3eb2"
+
+[[signature]]
+type = "filename"
+match = "configuration.user.xpl"
+enable = true
+description = "Little Snitch firewall configuration file"
+id = "1f9313f8233713604175b59bdf9c3ee323e38e70"
+
+[[signature]]
+type = "filename"
+match = "journal.txt"
+enable = true
+description = "Potential jrnl journal file"
+id = "986c29b704b6df3f99e61f612b29fb79d65b9dfc"
+
+[[signature]]
+type = "filename"
+match = "knife.rb"
+enable = true
+description = "Chef Knife configuration file"
+id = "4201b2ce9f1796d50e7cfc53866f27e721582544"
+
+[[signature]]
+type = "filename"
+match = "filezilla.xml"
+enable = true
+description = "FileZilla FTP configuration file"
+id = "d24f415060d2d58f78cf5b6fa489ef52b7d750e1"
+
+[[signature]]
+type = "filename"
+match = "recentservers.xml"
+enable = true
+description = "FileZilla FTP recent servers file"
+id = "7746805bb5796f9d0423519d81c723370cb7439c"
+
+[[signature]]
+type = "filename"
+match = "terraform.tfvars"
+enable = true
+description = "Terraform variable config file"
+id = "9a919ae66310da6ed8b512f1a717ab30dc2b0d5b"
+
+[[signature]]
+type = "content"
+match = "(?i)(\\bghp_[0-9A-Za-z]{36}\\b)"
+enable = true
+description = "Contains GitHub token"
+
+[[signature]]
+type = "content"
+match = "(?i)(\\bAKIA[0-9A-Z]{16}\\b)"
+enable = true
+description = "Contains AWS Access Key ID"
+id = "b73751fb2175f7e645fceb05f6f51d2d17a1e7c4"
+
+[[signature]]
+type = "content"
+match = "(?msi)(-----BEGIN PRIVATE KEY-----).*?-----END PRIVATE KEY-----"
+enable = true
+description = "Contains generic private key"
+id = "de185d9724fe2f611383cf49f5909aa1f19467bd"
+
+[[signature]]
+type = "content"
+match = "(?msi)(-----BEGIN PGP PRIVATE KEY BLOCK-----).*?-----END PGP PRIVATE KEY BLOCK-----"
+enable = true
+description = "Contains PGP private key"
+id = "a030ab6cb4767a19d307be28216ee7f210a5c358"
+
+[[signature]]
+type = "content"
+match = "(?msi)(-----BEGIN RSA PRIVATE KEY-----).*?-----END RSA PRIVATE KEY-----"
+enable = true
+description = "Contains RSA private key"
+id = "e01b739ba19c5c72b99bd09bd9ebbc8caa0531d0"
+
+[[signature]]
+type = "content"
+match = "(?i)password[ \\t]{0,64}[\\=\\:\\?](.{0,64}?[^\\r\\n].{0,32})"
+enable = true
+description = "Looks like a password"
+id = "205cb248412f369e90e382f739c691be2ee77a81"
+
+[[signature]]
+type = "content"
+match = "(?i)password:(.{0,64}?[^\\r\\n].{0,32})"
+enable = true
+description = "Looks like an Artifactory password"
+id = "42305719de385e903ab0a5206f8e31100ecd6beb"
+
+[[signature]]
+type = "content"
+match = "(?i)nexuspassword[ \\t]{0,64}[\\=\\:\\?](.{0,64}?[^\\r\\n].{0,32})"
+enable = true
+description = "Looks like a Nexus password"
+id = "69762d4f3936dcdadc69509ac2f7d3b2bb097a59"
+
+[[signature]]
+type = "content"
+match = "(?i)pass[ \\t]{0,64}[\\=\\:\\?](.{0,64}?[^\\r\\n].{0,32})"
+enable = true
+description = "Looks like a password"
+id = "c16b373cab31c2819f41081de9e9e948b7e2b54f"
+
+[[signature]]
+type = "content"
+match = "(?i)pwd[ \\t]{0,64}[\\=\\:\\?](.{0,64}?[^\\r\\n].{0,32})"
+enable = true
+description = "Looks like a password"
+id = "bc1506155909cf7e0fcdc6b1f858866f84a1eea3"
+
+[[signature]]
+type = "content"
+match = "(?i)passwd[ \\t]{0,64}[\\=\\:\\?](.{0,64}?[^\\r\\n].{0,32})"
+enable = true
+description = "Looks like a password"
+id = "06683f8cec505cffcac36dac8590201df96a6e12"
+
+[[signature]]
+type = "content"
+match = "(?i)(cred[ \\t]{0,64}[\\=\\:\\?].{0,64}?[^\\r\\n].{0,32})"
+enable = true
+description = "Looks like a password"
+id = "150f9dced32fe555067c25c2276131dc99883051"
+
+[[signature]]
+type = "content"
+match = "(?i)secret.*?key[ \\t]{0,64}[\\=\\:\\?](.{0,64}?[^\\r\\n].{0,32})"
+enable = true
+description = "Looks like a secret key"
+id = "def79352ef1c29038e0a7042e324669199f24577"
+
+[[signature]]
+type = "content"
+match = "(?i)(consumer|customer).*?(key|secret)[ \\t]{0,64}[\\=\\:\\?](.{0,64}?[^\\r\\n].{0,48})"
+enable = true
+description = "Looks like a secret key"
+id = "c0be05618d1f3c127f75c2f8730c43bef771ce5f"
+
+[[signature]]
+type = "content"
+match = "(?i)(authorization[ \\t]{0,64}[\\=\\:\\?].{0,64}?[^\\r\\n].{0,32})"
+enable = true
+description = "Looks like a secret authorization value"
+id = "915355015cf487f10a52518d1682c00ca7ff0234"
+
+[[signature]]
+type = "content"
+match = "(?i).*([a-z0-9+\\-.]+://([a-z0-9\\-._~%!$&'()*+;=]{1,96}?)@).*"
+enable = true
+description = "Looks like a secret in a URL"
+id = "2f4976208f19adf0518ecc20016d435d4d99690c"
+
+[[signature]]
+type = "filename"
+match = "?git-credentials"
+enable = true
+description = "git-credential-store helper credentials file"
+id = "8fd06d6dfd542d6ee3f2677e35b5293623d9ef8f"
+
+[[signature]]
+type = "extension"
+match = "keystore"
+enable = true
+description = "GNOME Keyring database file"
+
+[[signature]]
+type = "extension"
+match = "keyring"
+enable = true
+description = "GNOME Keyring database file"
+
+[[signature]]
+type = "extension"
+match = "kdb?"
+enable = true
+description = "KeePass password manager database file"
+id = "5e4ef0fb7f57bda07730f4091b66af3ab7698281"
+
+[[signature]]
+type = "filename"
+match = "?htpasswd"
+enable = true
+description = "Apache htpasswd file"
+id = "55c15c1df87b02c9e92ec346e897e7b7a858f175"
+
+[[signature]]
+type = "filename"
+match = "?netrc"
+enable = true
+description = "Configuration file for autologin process"
+id = "63fde8445927124e0ded9593df511d0611da5a97"
+
+[[signature]]
+type = "filename"
+match = "*_rsa"
+enable = true
+description = "Private SSH key"
+id = "cbf262d004fa77fdb41aa30df64faad729c8b5d6"
+
+[[signature]]
+type = "filename"
+match = "*_dsa"
+enable = true
+description = "Private SSH key"
+id = "9f475ed482c11cc8bba223534b834252ecee4711"
+
+[[signature]]
+type = "filename"
+match = "*_ed25519"
+enable = true
+description = "Private SSH key"
+id = "77dfe2b1f7a569e00eb2667dfb163951f577b05e"
+
+[[signature]]
+type = "filename"
+match = "*_ecdsa"
+enable = true
+description = "Private SSH key"
+id = "e7d16c12857915aae979e5aa7e360cd3706d6d9f"
+
+[[signature]]
+type = "filename"
+match = ".[a-z_]history"
+enable = true
+description = "Shell command history file"
+id = "42103b9589d10cb02093dc9dae6d2ee3ae5db053"
+
+[[signature]]
+type = "filename"
+match = "*mysql_history"
+enable = true
+description = "MySQL client command history file"
+id = "960f6cdb8e322cbba81d26681bd6e894f22f3e02"
+
+[[signature]]
+type = "filename"
+match = "?psql_history"
+enable = true
+description = "PostgreSQL client command history file"
+id = "eb5555bb29733d5cdd922259b07ca1a3a519ff10"
+
+[[signature]]
+type = "filename"
+match = "?pgpass"
+enable = true
+description = "PostgreSQL password file"
+id = "d778ee31d1cdf54b5efd2e3bf76f8fd5388d6612"
+
+[[signature]]
+type = "filename"
+match = "?irb_history"
+enable = true
+description = "Ruby IRB console history file"
+id = "410e57268bccc1ca868ab67609c1113a3442652c"
+
+[[signature]]
+type = "filename"
+match = "?muttrc"
+enable = true
+description = "Mutt email client configuration file"
+id = "dbdc1d37f8458b2696c0a8a1d40c0efbc55518a9"
+
+[[signature]]
+type = "filename"
+match = "?s3cfg"
+enable = true
+description = "S3cmd configuration file"
+id = "2dd531178c3dd6800ff4a127e0c7f931a61face8"
+
+[[signature]]
+type = "filename"
+match = "?trc"
+enable = true
+description = "T commandline Twitter client configuration file"
+id = "2586e3a5799000853f30346ac52a4485345bbcfb"
+
+[[signature]]
+type = "path"
+match = "\\.?ssh/config$"
+enable = true
+description = "SSH configuration file"
+id = "5a4d61564b0b2b70224fe79bd6a129fe92fbb999"
+
+[[signature]]
+type = "path"
+match = "\\.?purple/accounts\\.xml$"
+enable = true
+description = "Pidgin chat client account configuration file"
+id = "0f3bb0123e0e548b9814a462c4aed279ca4a992b"
+
+[[signature]]
+type = "path"
+match = "\\.?xchat2?/servlist_?\\.conf$"
+enable = true
+description = "Hexchat/XChat IRC client server list configuration file"
+id = "7ab2079737349c6b46062349f8f599df746108cc"
+
+[[signature]]
+type = "path"
+match = "\\.?irssi/config$"
+enable = true
+description = "Irssi IRC client configuration file"
+id = "86012bff4bb55f1b65d2df6904a072a800d0eb47"
+
+[[signature]]
+type = "path"
+match = "\\.?aws/credentials$"
+enable = true
+description = "AWS CLI credentials file"
+id = "753a020f83b1479fe232e8e1b96f999b5e94acf8"
+
+[[signature]]
+type = "path"
+match = "doctl/config.yaml$"
+enable = true
+description = "DigitalOcean doctl command-line client configuration file"
+id = "e8c84e2ed6b41237dc906e5926d0f5c0a5c3b8fa"
+
+[[signature]]
+type = "path"
+match = "\\.?chef/(.*)\\.pem$"
+enable = true
+description = "Chef private key"
+id = "2c44dda6b8731a5d8299e33739a133b736bd954a"
+
+[[signature]]
+type = "path"
+match = "etc/shadow$"
+enable = true
+description = "Potential Linux shadow file"
+id = "a997151d85fc59e2f8e30cb24c37341dec52a438"
+
+[[signature]]
+type = "path"
+match = "etc/passwd$"
+enable = true
+description = "Potential Linux passwd file"
+id = "a6be3daa3f62e3e253e0b0b8f84c463e382d18e1"
+
+[[signature]]
+type = "content"
+match = "(?i)(\\bhooks.slack.com/services)(.{0,64})"
+enable = true
+description = "looks like a slack token"
+id = "c6a0763cdf511faa8c55b0ba22090c791d40b810"
+
+
