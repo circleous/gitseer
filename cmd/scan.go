@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"os"
+	"strings"
 
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -11,8 +12,14 @@ import (
 )
 
 func init() {
+	scanCmd.PersistentFlags().StringVarP(&generatedFileName, "output", "o", "",
+		"generate a .json or .html report file after scan")
 	rootCmd.AddCommand(scanCmd)
 }
+
+var (
+	generatedFileName string
+)
 
 var scanCmd = &cobra.Command{
 	Use:   "scan",
@@ -39,6 +46,18 @@ func scan(_ *cobra.Command, _ []string) {
 		log.Error().Err(err).Msg("failed to initialize")
 		os.Exit(1)
 	}
+	defer a.Close()
 
 	a.Runner()
+
+	if generatedFileName != "" {
+		if strings.HasSuffix(generatedFileName, ".json") {
+
+		} else if strings.HasSuffix(generatedFileName, ".html") {
+
+		} else {
+			log.Error().Msg("invalid file type")
+			os.Exit(1)
+		}
+	}
 }
