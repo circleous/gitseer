@@ -26,7 +26,7 @@ func (a *analysis) processOrganizations(ctx context.Context) {
 		}
 
 		if org.ExpandUser {
-			u, err := a.gs.ListOrgUsers(ctx, org.Name, org.Type)
+			u, err := a.gs.ListOrgUsers(ctx, org.Type, org.Name)
 			if err != nil {
 				log.Error().Err(err).Str("organization", org.Name).
 					Str("type", org.Type).
@@ -36,8 +36,19 @@ func (a *analysis) processOrganizations(ctx context.Context) {
 			}
 		}
 
+		if org.ExpandUser {
+			u, err := a.gs.FindUserFuzzy(ctx, org.Type, org.Name)
+			if err != nil {
+				log.Error().Err(err).Str("organization", org.Name).
+					Str("type", org.Type).
+					Msg("failed to fetch fuzzy organization users")
+			} else if len(u) > 0 {
+				a.users = append(a.users, u...)
+			}
+		}
+
 		if org.ExpandRepo {
-			r, err := a.gs.ListOrgRepositories(ctx, org.Name, org.Type,
+			r, err := a.gs.ListOrgRepositories(ctx, org.Type, org.Name,
 				listRepoOpt)
 			if err != nil {
 				log.Error().Err(err).Str("organization", org.Name).
@@ -59,7 +70,7 @@ func (a *analysis) processUsers(ctx context.Context) {
 	// limit
 	for _, user := range a.users {
 		log.Debug().Str("user", user.Name).Msg("processing user")
-		r, err := a.gs.ListUserRepositories(ctx, user.Name, user.Type,
+		r, err := a.gs.ListUserRepositories(ctx, user.Type, user.Name,
 			listRepoOpt)
 		log.Debug().Str("user", user.Name).Msgf("got repo %d", len(r))
 		if err != nil {
@@ -72,13 +83,14 @@ func (a *analysis) processUsers(ctx context.Context) {
 }
 
 func (a *analysis) processRepositories(ctx context.Context) {
+	var err error
+
 	sem := semaphore.NewWeighted(int64(a.config.MaxWorker))
 
 	config := *a.config // copy
 	sig := a.signature
 
 	findingC := make(chan finding)
-	defer close(findingC)
 
 	quit := make(chan struct{})
 	defer close(quit)
@@ -88,7 +100,12 @@ func (a *analysis) processRepositories(ctx context.Context) {
 		for {
 			select {
 			case f := <-findingC:
-				a.finds = append(a.finds, f)
+				err := a.db.AddFinding(ctx, f.repository.Name, f.fileName, f.commitHash, f.matches)
+				log.Error().Err(err).
+					Str("repo", f.repository.Name).
+					Str("commit", f.commitHash).
+					Str("filename", f.fileName).
+					Msg("failed to add finding")
 			case <-quit:
 				return
 			}
@@ -96,12 +113,13 @@ func (a *analysis) processRepositories(ctx context.Context) {
 	}()
 
 	for _, repo := range a.repositories {
-		if err := sem.Acquire(ctx, 1); err != nil {
+		if err = sem.Acquire(ctx, 1); err != nil {
 			log.Error().Err(err).Msg("Failed to acquire semaphore")
 			break
 		}
 
 		repo := repo // copy
+		repo.LatestCommit, err = a.db.GetRepoLatestCommit(ctx, repo.Name)
 
 		// TODO: benchmark this path, currently we only use one goroutine per
 		// repository
@@ -112,7 +130,7 @@ func (a *analysis) processRepositories(ctx context.Context) {
 		}()
 	}
 
-	if err := sem.Acquire(ctx, int64(a.config.MaxWorker)); err != nil {
+	if err = sem.Acquire(ctx, int64(a.config.MaxWorker)); err != nil {
 		log.Error().Err(err).Msg("Failed to acquire semaphore")
 	}
 
@@ -129,7 +147,4 @@ func (a *analysis) Runner() {
 	a.processOrganizations(ctx)
 	a.processUsers(ctx)
 	a.processRepositories(ctx)
-
-	log.Debug().Msgf("%v", a.users)
-	log.Debug().Msgf("%v", a.repositories)
 }

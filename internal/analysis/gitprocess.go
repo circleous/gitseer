@@ -1,6 +1,7 @@
 package analysis
 
 import (
+	"errors"
 	"net/url"
 	"path"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 	"github.com/go-git/go-billy/v5/osfs"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/cache"
+	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/storage"
 	"github.com/go-git/go-git/v5/storage/filesystem"
 	"github.com/go-git/go-git/v5/storage/memory"
@@ -18,6 +20,45 @@ import (
 	cgit "github.com/circleous/gitseer/pkg/git"
 	"github.com/circleous/gitseer/pkg/signature"
 )
+
+func processFile(file *object.File, commit *object.Commit, repo cgit.Repository, ignoreFiles []string,
+	signatures []signature.Base) ([]signature.Match, error) {
+
+	// skip if binary
+	if ok, err := file.IsBinary(); err != nil && ok {
+		return nil, nil
+	}
+
+	filename := file.Name
+
+	// check for ignored files
+	imatch := false
+	for _, ignoreFile := range ignoreFiles {
+		if imatch, _ = filepath.Match(ignoreFile, filename); imatch {
+			break
+		}
+	}
+
+	// if there's a match in ignored pattern, skip
+	if imatch {
+		return nil, nil
+	}
+
+	// get the file content
+	content, err := file.Contents()
+	if err != nil {
+		log.Error().Err(err).Str("url", repo.URL).
+			Str("commit", commit.Hash.String()).
+			Str("path", filename).
+			Msg("failed to get file content")
+		return nil, err
+	}
+
+	// find any matches with signatures for file name and contents
+	matches := signature.ExtractMatch(filename, content, signatures)
+
+	return matches, nil
+}
 
 func processRepository(repo cgit.Repository, storageType, storagePath string,
 	ignoreFiles []string, signatures []signature.Base, findingC chan finding) {
@@ -86,14 +127,24 @@ func processRepository(repo cgit.Repository, storageType, storagePath string,
 		return
 	}
 
+	log.Print(repo)
+
 	for {
 		commit, err := commits.Next()
 		if err != nil {
 			break
 		}
 
-		// for every commmit, iterate throught it's file tree
-		// TODO: only process changed files, not the whole tree
+		// get parent commit, if there isn't any, this could be the first commit,
+		// so we don't have to compare anything
+		parentCommit, err := commit.Parent(1)
+		if err != nil && !errors.Is(err, object.ErrParentNotFound) {
+			log.Error().Err(err).Str("url", repo.URL).
+				Str("commit", commit.Hash.String()).
+				Msg("failed to get parent commit from the repository")
+			continue
+		}
+
 		tree, err := commit.Tree()
 		if err != nil {
 			log.Error().Err(err).Str("url", repo.URL).
@@ -102,42 +153,89 @@ func processRepository(repo cgit.Repository, storageType, storagePath string,
 			continue
 		}
 
-		files := tree.Files()
-		for {
-			file, err := files.Next()
+		// log.Print(repo.Name, commit.Hash.String())
+
+		if parentCommit != nil {
+			patch, err := parentCommit.Patch(commit)
 			if err != nil {
-				break
+				log.Error().Err(err).Str("url", repo.URL).
+					Str("commit", commit.Hash.String()).
+					Str("parent", parentCommit.Hash.String()).
+					Msg("failed to get patch")
+				continue
 			}
+			filePatches := patch.FilePatches()
 
-			filename := file.Name
+			for _, file := range filePatches {
+				_, to := file.Files()
+				// file could be deleted in this patch
+				if to == nil {
+					continue
+				}
 
-			// check for ignored files
-			imatch := false
-			for _, ignoreFile := range ignoreFiles {
-				if imatch, _ = filepath.Match(ignoreFile, filename); imatch {
-					break
+				file, err := tree.File(to.Path())
+				if err != nil {
+					log.Error().Err(err).Str("url", repo.URL).
+						Str("commit", commit.Hash.String()).
+						Str("path", to.Path()).
+						Msg("failed to get file")
+					continue
+				}
+
+				matches, err := processFile(file, commit, repo, ignoreFiles, signatures)
+				if err != nil {
+					log.Error().Err(err).Str("url", repo.URL).
+						Str("commit", commit.Hash.String()).
+						Str("path", file.Name).
+						Msg("failed to process file")
+					continue
+				}
+
+				// skip if there isn't any match(s)
+				if matches != nil || len(matches) == 0 {
+					continue
+				}
+
+				log.Debug().Str("repo", repo.Name).
+					Str("commit", commit.Hash.String()).
+					Str("path", file.Name).
+					Msgf("found %v", matches)
+
+				findingC <- finding{
+					repository: repo,
+					commitHash: commit.Hash.String(),
+					fileName:   file.Name,
+					matches:    matches,
 				}
 			}
-			// if there's a match, skip it
-			if imatch {
-				continue
-			}
+		} else {
+			files := tree.Files()
+			for {
+				file, err := files.Next()
+				if err != nil {
+					break
+				}
 
-			// get the file content
-			content, err := file.Contents()
+				matches, err := processFile(file, commit, repo, ignoreFiles, signatures)
+				if err != nil {
+					log.Error().Err(err).Str("url", repo.URL).
+						Str("commit", commit.Hash.String()).
+						Str("path", file.Name).
+						Msg("failed to process file")
+					continue
+				}
 
-			// find any lmatches with signatures for file name and contents
-			lmatches := signature.ExtractMatch(filename, content, signatures)
+				// skip if there isn't any match(s)
+				if matches != nil || len(matches) == 0 {
+					continue
+				}
 
-			// check if there's any match, if not then skip to next file
-			if lmatches == nil && len(lmatches) == 0 {
-				continue
-			}
-
-			findingC <- finding{
-				repository: repo,
-				commitHash: commit.Hash.String(),
-				matches:    lmatches,
+				findingC <- finding{
+					repository: repo,
+					commitHash: commit.Hash.String(),
+					fileName:   file.Name,
+					matches:    matches,
+				}
 			}
 		}
 	}

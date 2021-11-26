@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
-	"github.com/jackc/puddle"
 
+	"github.com/circleous/gitseer/internal/database"
 	"github.com/circleous/gitseer/pkg/git"
 	"github.com/circleous/gitseer/pkg/gitservice"
 	"github.com/circleous/gitseer/pkg/signature"
@@ -73,6 +73,8 @@ type Config struct {
 
 	IgnoreFiles []string `toml:"ignore_files"`
 
+	DatabaseURI string `toml:"database"`
+
 	// GithubToken
 	GithubToken string `toml:"github_token"`
 
@@ -88,9 +90,9 @@ type Config struct {
 }
 
 type analysis struct {
-	p            *puddle.Pool
 	config       *Config
 	gs           gitservice.Service
+	db           database.Service
 	users        []git.User
 	repositories []git.Repository
 	signature    []signature.Base
@@ -100,12 +102,14 @@ type analysis struct {
 type finding struct {
 	repository git.Repository
 	commitHash string
+	fileName   string
 	matches    []signature.Match
 }
 
 // Service is the main interface for analysis module
 type Service interface {
 	Runner()
+	Close()
 }
 
 // ParseConfig builds a Config from a toml file
@@ -115,6 +119,10 @@ func ParseConfig(configPath string) (*Config, error) {
 	meta, err := toml.DecodeFile(configPath, &config)
 	if err != nil {
 		return nil, err
+	}
+
+	if !meta.IsDefined("database") {
+		return nil, errors.New("database is not defined")
 	}
 
 	if !meta.IsDefined("signature_path") {
@@ -161,6 +169,15 @@ func New(config *Config, sig []signature.Base) (Service, error) {
 		finds []finding
 	)
 
+	db, err := database.NewDatabase(config.DatabaseURI)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = db.Initialize(); err != nil {
+		return nil, err
+	}
+
 	parent := context.Background()
 	ctx := context.WithValue(parent, git.MaxWorkerKey, config.MaxWorker)
 
@@ -176,6 +193,7 @@ func New(config *Config, sig []signature.Base) (Service, error) {
 	}
 
 	return &analysis{
+		db:           db,
 		config:       config,
 		gs:           gs,
 		users:        users,
@@ -183,4 +201,8 @@ func New(config *Config, sig []signature.Base) (Service, error) {
 		signature:    sig,
 		finds:        finds,
 	}, nil
+}
+
+func (a *analysis) Close() {
+	a.db.Close()
 }
