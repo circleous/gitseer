@@ -36,7 +36,7 @@ func (a *analysis) processOrganizations(ctx context.Context) {
 			}
 		}
 
-		if org.ExpandUser {
+		if org.ExpandUserFuzzy {
 			u, err := a.gs.FindUserFuzzy(ctx, org.Type, org.Name)
 			if err != nil {
 				log.Error().Err(err).Str("organization", org.Name).

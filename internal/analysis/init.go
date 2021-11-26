@@ -33,6 +33,10 @@ type OrganizationConfig struct {
 	// ExpandUser if set to true, it will add organization users to analysis
 	ExpandUser bool `toml:"expand_user"`
 
+	// ExpandUserFuzzy if set to true, it will search organization users with
+	// fuzzy search API and add them to analysis
+	ExpandUserFuzzy bool `toml:"expand_user_fuzzy"`
+
 	// ExpandRepo if set to true, it will add organization repos to analysis
 	ExpandRepo bool `toml:"expand_repository"`
 

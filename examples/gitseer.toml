@@ -17,6 +17,9 @@ with_fork = false
 # only commits related to HEAD are scanned.
 all_branch = false
 
+# database (required), currently only support sqlite
+database = "file:gitseer.sqlite"
+
 # Available storage_types are ["disk", "memory"], for disk storage_type it's
 # required to define the storage_path. Examples:
 #
@@ -32,12 +35,13 @@ storage_path = "/home/user/gitseer"
 # signature_path
 signature_path = "signatures.toml"
 
-# [[organization]]
-# type = "github"
-# name = "traveloka"
-# expand_user = true
+[[organization]]
+type = "github"
+name = "gojek"
+expand_user = true
+expand_user_fuzzy = true
 # expand_repo = true
 
-[[user]]
-type = "github"
-name = "circleous"
+# [[user]]
+# type = "github"
+# name = "circleous"
