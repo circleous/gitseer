@@ -1,11 +1,10 @@
 package signature
 
 const (
-	extenstionType   = "extension"
-	filenameType     = "filename"
-	pathType         = "path"
-	contentType      = "content"
-	contentRegexType = "content_regex"
+	extenstionType = "extension"
+	filenameType   = "filename"
+	pathType       = "path"
+	contentType    = "content"
 )
 
 // Metadata contains the version and signature author
@@ -26,8 +25,6 @@ type Base struct {
 	// Entropy
 	Entropy float64 `toml:"entropy"`
 
-	// Comment of the signature, added to findings
-	Comment string `toml:"comment"`
 	// Description of the signature, added to findings
 	Description string `toml:"description"`
 
@@ -52,8 +49,7 @@ type Signature struct {
 // ExtractMtach
 type Match struct {
 	Substring   string
-	Filename    string
 	SignatureID string
-	Comment     string
 	Description string
+	LineNumber  int32
 }

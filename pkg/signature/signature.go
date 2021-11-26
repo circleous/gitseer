@@ -29,23 +29,21 @@ func LoadSignature(file string) (*Signature, error) {
 	}
 
 	hash := sha1.New()
-	for _, sig := range signature.Signatures {
-		if sig.ID == "" {
-			sig.ID = hex.EncodeToString(hash.Sum([]byte(sig.MatchString)))
+	for i := range signature.Signatures {
+		if signature.Signatures[i].ID == "" {
+			signature.Signatures[i].ID = hex.EncodeToString(hash.Sum([]byte(signature.Signatures[i].MatchString)))
 			hash.Reset()
 		}
 
-		switch sig.Type {
+		switch signature.Signatures[i].Type {
 		case extenstionType:
-			sig.Match = sig.MatchString
+			signature.Signatures[i].Match = signature.Signatures[i].MatchString
 		case pathType:
-			sig.Match = sig.MatchString
+			signature.Signatures[i].Match = regexp.MustCompile(signature.Signatures[i].MatchString)
 		case filenameType:
-			sig.Match = sig.MatchString
+			signature.Signatures[i].Match = signature.Signatures[i].MatchString
 		case contentType:
-			sig.Match = sig.MatchString
-		case contentRegexType:
-			sig.Match = regexp.MustCompile(sig.MatchString)
+			signature.Signatures[i].Match = regexp.MustCompile(signature.Signatures[i].MatchString)
 		}
 	}
 
@@ -65,13 +63,11 @@ func ExtractMatch(filename, content string, signatures []Base) []Match {
 		case extenstionType:
 			baseFilename := filepath.Base(filename)
 			needle := signature.Match.(string)
-			if strings.HasPrefix(baseFilename, needle) {
+			if strings.HasSuffix(baseFilename, needle) {
 				matches = append(matches, Match{
 					SignatureID: signature.ID,
-					Comment:     signature.Comment,
 					Description: signature.Description,
 					Substring:   baseFilename,
-					Filename:    filename,
 				})
 			}
 		case filenameType:
@@ -80,46 +76,33 @@ func ExtractMatch(filename, content string, signatures []Base) []Match {
 			if ok, _ := filepath.Match(needle, baseFilename); ok {
 				matches = append(matches, Match{
 					SignatureID: signature.ID,
-					Comment:     signature.Comment,
 					Description: signature.Description,
 					Substring:   baseFilename,
-					Filename:    filename,
 				})
 			}
 		case pathType:
-			needle := signature.Match.(string)
-			if ok, _ := filepath.Match(needle, filename); ok {
+			re := signature.Match.(*regexp.Regexp)
+			if re.FindString(filename) != "" {
 				matches = append(matches, Match{
 					SignatureID: signature.ID,
-					Comment:     signature.Comment,
 					Description: signature.Description,
 					Substring:   filename,
-					Filename:    filename,
 				})
 			}
 		case contentType:
-			needle := signature.Match.(string)
-			if idx := strings.Index(content, needle); idx != -1 {
-				matches = append(matches, Match{
-					SignatureID: signature.ID,
-					Comment:     signature.Comment,
-					Description: signature.Description,
-					Substring:   content[idx : idx+len(needle)],
-					Filename:    filename,
-				})
-			}
-		case contentRegexType:
 			re := signature.Match.(*regexp.Regexp)
-			match := re.FindString(content)
-			if match != "" {
-				matches = append(matches, Match{
-					SignatureID: signature.ID,
-					Comment:     signature.Comment,
-					Description: signature.Description,
-					Substring:   match,
-					Filename:    filename,
-				})
+			founds := re.FindAllStringIndex(content, -1)
+			if founds != nil {
+				for _, found := range founds {
+					matches = append(matches, Match{
+						SignatureID: signature.ID,
+						Description: signature.Description,
+						Substring:   content[found[0]:found[1]],
+						LineNumber:  StringPosToLineNumber(content, found[0]),
+					})
+				}
 			}
+
 		}
 	}
 
