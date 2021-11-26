@@ -22,8 +22,9 @@ type Service interface {
 	// ListOrgUsers return all users joined the organization
 	ListOrgUsers(ctx context.Context, org string) ([]git.User, error)
 	// ListUserRepositories return all repositorises from a user / org
-	ListUserRepositories(ctx context.Context, user string,
-		opt *git.ListRepositoriesOptions) ([]git.Repository, error)
+	ListUserRepositories(ctx context.Context, user string, opt *git.ListRepositoriesOptions) ([]git.Repository, error)
+
+	FindUserFuzzy(ctx context.Context, query string) ([]git.User, error)
 }
 
 // NewGithubClient create plain new github api client without token, change max
@@ -95,6 +96,37 @@ func (ghs *githubService) ListOrgUsers(ctx context.Context, org string) ([]git.U
 		})
 	}
 
+	for page := resp.NextPage; page < resp.LastPage; page++ {
+		sem.Acquire(ctx, 1)
+		page := page // copy
+		go func() {
+			gitUsers, _, err := ghs.client.Organizations.ListMembers(ctx, org,
+				&github.ListMembersOptions{
+					ListOptions: github.ListOptions{PerPage: 100, Page: page},
+				})
+			if err != nil {
+				return
+			}
+
+			// rather than switch mutex every append(), better to switch one
+			// time so that it wont spent so much time on context switches
+			m.Lock()
+			for _, gitUser := range gitUsers {
+				users = append(users, git.User{
+					Name: *gitUser.Login,
+					Type: git.GITHUB,
+				})
+			}
+			m.Unlock()
+
+			sem.Release(1)
+		}()
+	}
+
+	// wait
+	if err := sem.Acquire(ctx, int64(ghs.maxWorker)); err != nil {
+		return nil, err
+	}
 	for page := resp.NextPage; page < resp.LastPage; page++ {
 		sem.Acquire(ctx, 1)
 		page := page // copy
@@ -210,4 +242,64 @@ func (ghs *githubService) ListUserRepositories(ctx context.Context, user string,
 	}
 
 	return repos, nil
+}
+
+// FindUserFuzzy find users with fuzzy search github API
+func (ghs *githubService) FindUserFuzzy(ctx context.Context, query string) ([]git.User, error) {
+	var m sync.Mutex
+
+	users := make([]git.User, 0)
+
+	sem := semaphore.NewWeighted(int64(ghs.maxWorker))
+
+	sr, resp, err := ghs.client.Search.Users(ctx, `type:user+`+query, &github.SearchOptions{
+		ListOptions: github.ListOptions{PerPage: 100},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if *sr.Total == 0 {
+		return nil, nil
+	}
+
+	for _, gitUser := range sr.Users {
+		users = append(users, git.User{
+			Name: *gitUser.Login,
+			Type: git.GITHUB,
+		})
+	}
+
+	for page := resp.NextPage; page < resp.LastPage; page++ {
+		sem.Acquire(ctx, 1)
+		page := page // copy
+		go func() {
+			sr, _, err := ghs.client.Search.Users(ctx, `type:user+`+query, &github.SearchOptions{
+				ListOptions: github.ListOptions{PerPage: 100, Page: page},
+			})
+			if err != nil {
+				return
+			}
+
+			// rather than switch mutex every append(), better to switch one
+			// time so that it wont spent so much time on context switches
+			m.Lock()
+			for _, gitUser := range sr.Users {
+				users = append(users, git.User{
+					Name: *gitUser.Login,
+					Type: git.GITHUB,
+				})
+			}
+			m.Unlock()
+
+			sem.Release(1)
+		}()
+	}
+
+	// wait
+	if err := sem.Acquire(ctx, int64(ghs.maxWorker)); err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }
