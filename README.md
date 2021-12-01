@@ -1,7 +1,8 @@
 # gitseer
 
 Yet another git secrets scanner. Not geared for git actions, but more of a
-continuous scanner. Hugely inspired by [N0MoreSecr3ts/wraith][1].
+continuous scanner. Hugely inspired by [N0MoreSecr3ts/wraith][1]. Anyway, this
+project is not production ready and most
 
 ## Install
 
@@ -39,6 +40,11 @@ expand_user_fuzzy = true
 > You can take a look at how signatures defined in examples/signatures.toml.
 > Currently, only "content" and "path" type are using regex. extension checked
 > with strings.HasSuffix and filename checked with filepath.Match.
+
+## Todo
+ - [x] Detect signatures in file
+ - [ ] Database, (?, somewhat works, but I still don't like it, design wise) 
+ - [ ] Process only "patched" files in commits (!, a bug in go-git upstream)
 
 [1]: https://github.com/N0MoreSecr3ts/wraith
 [2]: https://github.com/circleous/gitseer/tree/main/examples
